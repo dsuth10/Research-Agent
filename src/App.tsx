@@ -8,7 +8,7 @@ import ResultsViewer from '@/modules/ResultsViewer'
 import TaskLog from '@/modules/TaskLog'
 import Settings from '@/modules/Settings'
 
-function App() {
+export default function App() {
   const { ui, settings } = useAppStore()
 
   // Initialize OpenAI service with API key
@@ -50,5 +50,3 @@ function App() {
     </Layout>
   )
 }
-
-export default App

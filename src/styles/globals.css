@@ -36,33 +36,33 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 228 12% 8%;           /* #181a20 - main background */
+    --foreground: 220 20% 96%;          /* #f5f6fa - primary text */
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 228 10% 12%;                /* #23232b - card/panel background */
+    --card-foreground: 220 20% 96%;     /* #f5f6fa - card text */
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 228 10% 12%;             /* #23232b - popover background */
+    --popover-foreground: 220 20% 96%;  /* #f5f6fa - popover text */
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 200 100% 60%;            /* #23b0ff - accent/primary blue */
+    --primary-foreground: 220 20% 96%;  /* #f5f6fa - button text */
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 228 10% 18%;           /* #23232b - secondary background */
+    --secondary-foreground: 220 20% 96%;/* #f5f6fa - secondary text */
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 228 10% 18%;               /* #23232b - muted background */
+    --muted-foreground: 220 10% 70%;    /* #b0b3c0 - muted text */
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 200 100% 60%;             /* #23b0ff - accent blue */
+    --accent-foreground: 220 20% 96%;   /* #f5f6fa - accent text */
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;           /* #ff4d4f - error */
+    --destructive-foreground: 220 20% 96%;/* #f5f6fa - error text */
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 228 10% 18%;              /* #23232b - border */
+    --input: 228 10% 18%;               /* #23232b - input background */
+    --ring: 200 100% 60%;               /* #23b0ff - focus ring */
   }
 }
 

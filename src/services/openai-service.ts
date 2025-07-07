@@ -1,5 +1,5 @@
 import OpenAI from 'openai'
-import type { OpenAIResponse, PromptConfig } from '@/types/types'
+import type { OpenAIResponse, PromptConfig, DeepResearchPromptConfig } from '@/types/types'
 
 function mapStatus(apiStatus: string | undefined): 'running' | 'completed' | 'failed' {
   switch (apiStatus) {
@@ -75,7 +75,7 @@ Return only the optimized research prompt, nothing else.`
     return response.choices[0]?.message?.content || config.goal
   }
 
-  async runDeepResearch(prompt: string): Promise<{
+  async runDeepResearch(config: DeepResearchPromptConfig): Promise<{
     responseId: string
     stream: ReadableStream<string>
   }> {
@@ -83,20 +83,33 @@ Return only the optimized research prompt, nothing else.`
       throw new Error('OpenAI client not initialized')
     }
 
-    // Create research task
-    const response = await this.client.responses.create({
-      model: 'o3-deep-research-2025-06-26',
-      input: [
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      background: true, // Run in background for long tasks
-    })
+    // Compose the input array for the API
+    const input = [
+      { role: 'developer', content: [{ type: 'input_text', text: config.systemPrompt || '' }] },
+      { role: 'user', content: [{ type: 'input_text', text: config.userPrompt }] },
+    ]
 
-    const responseId = response.id
-    const self = this
+    // Build the payload
+    const payload: any = {
+      model: config.model,
+      input,
+      max_tokens: config.maxTokens,
+      tools: config.tools,
+      background: config.background,
+      webhook_url: config.webhook_url,
+      seed: config.seed,
+    }
+    if (config.reasoning) payload.reasoning = config.reasoning;
+    if (config.tool_choice) payload.tool_choice = config.tool_choice;
+
+    // Remove undefined fields
+    Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k]);
+
+    // Create research task
+    const response = await this.client.responses.create(payload);
+
+    const responseId = response.id;
+    const self = this;
 
     // Create a stream for progress updates
     const stream = new ReadableStream<string>({
@@ -104,35 +117,35 @@ Return only the optimized research prompt, nothing else.`
         // Poll for updates
         const pollForUpdates = async () => {
           try {
-            const status = await self.client!.responses.retrieve(responseId)
-            const mappedStatus = mapStatus(status.status)
+            const status = await self.client!.responses.retrieve(responseId);
+            const mappedStatus = mapStatus(status.status);
             const mapped = {
               ...status,
               status: mappedStatus,
               usage: mapUsage(status.usage),
-            }
+            };
             if (mapped.status === 'completed') {
-              controller.enqueue(JSON.stringify(mapped))
-              controller.close()
-              return
+              controller.enqueue(JSON.stringify(mapped));
+              controller.close();
+              return;
             }
             if (mapped.status === 'failed') {
-              controller.error(new Error('Research failed'))
-              return
+              controller.error(new Error('Research failed'));
+              return;
             }
             // Send progress update
-            controller.enqueue(JSON.stringify({ status: 'running', id: responseId }))
+            controller.enqueue(JSON.stringify({ status: 'running', id: responseId }));
             // Continue polling
-            setTimeout(pollForUpdates, 2000)
+            setTimeout(pollForUpdates, 2000);
           } catch (error) {
-            controller.error(error)
+            controller.error(error);
           }
-        }
-        pollForUpdates()
+        };
+        pollForUpdates();
       },
-    })
+    });
 
-    return { responseId, stream }
+    return { responseId, stream };
   }
 
   async getResearchResult(responseId: string): Promise<OpenAIResponse> {

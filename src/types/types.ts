@@ -77,3 +77,29 @@ export interface OpenAIResponse {
     total_tokens: number
   }
 }
+
+export interface DeepResearchTool {
+  type: 'web_search_preview' | 'mcp';
+  search_context_size?: 'low' | 'medium' | 'high';
+  server_label?: string;
+  server_url?: string;
+  require_approval?: 'never' | 'auto' | 'manual';
+}
+
+export interface DeepResearchReasoning {
+  summary: 'auto' | 'concise' | 'detailed';
+  effort: 'low' | 'medium' | 'high';
+}
+
+export interface DeepResearchPromptConfig {
+  userPrompt: string;
+  systemPrompt?: string;
+  model: 'o3-deep-research-2025-06-26' | 'o4-mini-deep-research-2025-06-26';
+  maxTokens: number;
+  tools: DeepResearchTool[];
+  tool_choice?: { type: 'web_search_preview' | 'mcp' };
+  reasoning?: DeepResearchReasoning;
+  background?: boolean;
+  seed?: number;
+  webhook_url?: string;
+}

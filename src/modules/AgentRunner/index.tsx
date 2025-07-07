@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useAppStore } from '@/store/app-store';
 import { openaiService } from '@/services/openai-service';
 import Button from '@/components/Button';
+import Card from '@/components/Card';
 
 // TODO: Implement task execution, streaming updates, and cost tracking
 const AgentRunner = () => {
@@ -102,28 +103,28 @@ const AgentRunner = () => {
   }
 
   return (
-    <div className="p-4 border rounded bg-background max-w-2xl mx-auto space-y-4">
-      <h2 className="text-xl font-bold mb-2">Agent Runner</h2>
+    <Card>
+      <h2 className="text-xl font-semibold mb-2">Agent Runner</h2>
       <div className="mb-2">
-        <div className="font-semibold">Prompt:</div>
-        <div className="bg-muted p-2 rounded text-sm whitespace-pre-wrap">{currentResearch.prompt}</div>
+        <div className="font-medium">Prompt:</div>
+        <div className="bg-muted p-3 rounded text-sm whitespace-pre-wrap">{currentResearch.prompt}</div>
       </div>
       <div className="flex items-center gap-4">
-        {progress === 'running' && <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary" />}
+        {progress === 'running' && <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-emerald-400" />}
         <span className="text-sm">{statusText || (currentResearch.status === 'completed' ? 'Completed' : 'Idle')}</span>
       </div>
       {progress === 'completed' && (
-        <div className="text-green-600 text-sm">Research complete! Redirecting to results...</div>
+        <div className="text-green-500 text-sm">Research complete! Redirecting to results...</div>
       )}
       {progress === 'error' && (
-        <div className="text-red-600 text-sm">{error} <Button onClick={handleRetry} size="sm">Retry</Button></div>
+        <div className="text-destructive text-sm">{error} <Button onClick={handleRetry} size="sm">Retry</Button></div>
       )}
       <div className="mt-2 text-xs text-muted-foreground">
         <div>Input Tokens: {cost.inputTokens}</div>
         <div>Output Tokens: {cost.outputTokens}</div>
         <div>Total Cost: ${cost.totalCost.toFixed(4)}</div>
       </div>
-    </div>
+    </Card>
   );
 };
 

@@ -14,7 +14,7 @@ export default function Header() {
   }
 
   return (
-    <header className="border-b bg-card">
+    <header className="sticky top-0 z-10 bg-background text-foreground border-b border-border">
       <div className="flex h-16 items-center justify-between px-6">
         <div className="flex items-center gap-4">
           <Button
@@ -25,15 +25,22 @@ export default function Header() {
           >
             <Menu className="h-4 w-4" />
           </Button>
-          <h1 className="text-xl font-bold">Research Wrapper</h1>
+          <h1 className="text-xl font-semibold">Research Wrapper</h1>
           {!settings.openaiApiKey && (
             <span className="text-xs bg-destructive text-destructive-foreground px-2 py-1 rounded">
               API Key Required
             </span>
           )}
         </div>
-
         <div className="flex items-center gap-2">
+          <Button
+            variant="default"
+            size="lg"
+            className="font-bold"
+            // TODO: Connect to research run logic
+          >
+            Run ▶
+          </Button>
           <Button
             variant="ghost"
             size="sm"

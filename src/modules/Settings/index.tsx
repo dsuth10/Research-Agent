@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useAppStore } from '@/store/app-store';
 import Button from '@/components/Button';
+import Card from '@/components/Card';
+import Input from '@/components/Input';
 
 function Settings() {
   const { settings, updateSettings } = useAppStore();
@@ -15,14 +17,13 @@ function Settings() {
   };
 
   return (
-    <div className="max-w-lg mx-auto mt-10 p-6 border rounded bg-background">
-      <h2 className="text-2xl font-bold mb-4">Settings</h2>
+    <Card className="max-w-lg mt-10 space-y-6">
+      <h2 className="text-2xl font-semibold mb-4">Settings</h2>
       <form onSubmit={handleSave} className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-2">OpenAI API Key</label>
-          <input
+          <Input
             type="text"
-            className="w-full p-3 border rounded-md"
             value={apiKey}
             onChange={e => setApiKey(e.target.value)}
             placeholder="sk-..."
@@ -30,9 +31,9 @@ function Settings() {
           />
         </div>
         <Button type="submit" className="w-full">Save</Button>
-        {saved && <div className="text-green-600 text-sm mt-2">API key saved!</div>}
+        {saved && <div className="text-emerald-600 text-sm mt-2">API key saved!</div>}
       </form>
-    </div>
+    </Card>
   );
 }
 
