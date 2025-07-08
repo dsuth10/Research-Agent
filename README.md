@@ -1,11 +1,11 @@
 # Research Agent
 
-A modern, scalable React SPA that wraps OpenAI's Deep Research API, providing a robust, user-friendly interface for advanced research workflows. This application features local file management, comprehensive export options, and optional cloud integrations, all while maintaining high security and performance standards.
+A modern, scalable React SPA for advanced research workflows, powered exclusively by OpenRouter. This application provides a robust, user-friendly interface for prompt creation, research execution, result analysis, and export, all with local-first security and performance.
 
 ## Features
-- **Prompt Builder**: Multi-step wizard for crafting and optimizing research prompts with real-time token/cost estimation.
-- **Agent Runner**: Executes Deep Research tasks with streaming updates, background management, and cost tracking.
-- **Results Viewer**: Tabbed interface for report analysis, citation management, and multi-format export (PDF, DOCX, Markdown). 
+- **Prompt Builder**: Multi-step wizard for crafting and optimizing research prompts with real-time token/cost estimation. Supports only OpenRouter-compatible models and options.
+- **Agent Runner**: Executes research tasks with streaming updates and cost tracking. Payloads are always OpenRouter-compliant.
+- **Results Viewer**: Tabbed interface for report analysis, citation management, and multi-format export (PDF, DOCX, Markdown).
   - Tabbed UI: Report, Thought Process, Sources
   - Inline citation management: clickable citations, source highlighting, verification status
   - Export: Markdown, PDF, DOCX (with cost and token usage)
@@ -14,7 +14,7 @@ A modern, scalable React SPA that wraps OpenAI's Deep Research API, providing a 
   - Interactive tools: search/filter, expand/collapse sources
 - **Export & Sync**: Export to PDF, DOCX, Markdown, and sync with Notion/Obsidian.
 - **Task Log**: Local research history, search/filter, analytics, and export/backup.
-- **Secure API Key Management**: Client-side only, with .env.local support.
+- **Secure API Key Management**: Client-side only, with `.env.local` support for OpenRouter API keys.
 - **Modern Testing**: Vitest, React Testing Library, and Playwright for comprehensive testing.
 
 ## Architecture
@@ -45,7 +45,7 @@ A modern, scalable React SPA that wraps OpenAI's Deep Research API, providing a 
 - **Forms**: React Hook Form v7, Zod
 - **Styling**: Tailwind CSS, shadcn/ui patterns
 - **Export**: pdf-lib, docx.js, markdown-it
-- **API**: OpenAI (o3-deep-research-2025-06-26, GPT-4.1) or OpenRouter
+- **API**: OpenRouter (all research and prompt generation)
 - **File System**: File System Access API, browser-fs-access
 - **Testing**: Vitest, React Testing Library, Playwright
 
@@ -74,7 +74,7 @@ A modern, scalable React SPA that wraps OpenAI's Deep Research API, providing a 
 - `Complete Technical Guide.md` — Full technical documentation
 
 ## Security
-- API keys are managed client-side via `.env.local` (never committed). Use `VITE_OPENAI_API_KEY` or `VITE_OPENROUTER_API_KEY` depending on the provider.
+- API keys are managed client-side via `.env.local` (never committed). Use `VITE_OPENROUTER_API_KEY` for OpenRouter access.
 - All file operations require explicit user consent
 - HTTPS required for full functionality
 
