@@ -1,3 +1,4 @@
+// Event/Data Contract: Agent Runner updates the Research object (including result, status, cost) in Zustand store. Results Viewer subscribes to currentResearch and reflects updates in real-time. All updates are propagated via Zustand state.
 // Global types for the application
 export interface Research {
   id: string

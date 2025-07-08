@@ -93,7 +93,6 @@ Return only the optimized research prompt, nothing else.`
     const payload: any = {
       model: config.model,
       input,
-      max_tokens: config.maxTokens,
       tools: config.tools,
       background: config.background,
       webhook_url: config.webhook_url,
