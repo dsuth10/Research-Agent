@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { useAppStore } from '@/store/app-store'
 import { openaiService } from '@/services/openai-service'
 import Layout from '@/components/Layout'

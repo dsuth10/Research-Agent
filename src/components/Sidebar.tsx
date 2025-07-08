@@ -1,13 +1,5 @@
-import { FileText, Play, BarChart3, History, Settings } from 'lucide-react'
 import { useAppStore } from '@/store/app-store'
-import Button from '@/components/Button'
 
-const navigationItems = [
-  { id: 'prompt', label: 'Prompt Builder', icon: FileText },
-  { id: 'research', label: 'Run Research', icon: Play },
-  { id: 'results', label: 'Results', icon: BarChart3 },
-  { id: 'history', label: 'History', icon: History },
-] as const
 
 export default function Sidebar() {
   const { ui, setUI, researchHistory } = useAppStore()
@@ -20,7 +12,7 @@ export default function Sidebar() {
   return (
     <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-56 bg-card text-card-foreground p-4 space-y-4">
       <nav className="space-y-4">
-        {steps.map((step, idx) => {
+        {steps.map((step) => {
           const isActive = ui.currentTab === step.id
           return (
             <div

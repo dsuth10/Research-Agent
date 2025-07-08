@@ -5,7 +5,6 @@ import Input from '@/components/Input';
 import Textarea from '@/components/Textarea';
 import Select from '@/components/Select';
 import { useAppStore } from '@/store/app-store';
-import { openaiService } from '@/services/openai-service';
 import { calculateCost, generateId } from '@/utils/utils';
 import type { DeepResearchPromptConfig, DeepResearchTool } from '@/types/types';
 
@@ -28,7 +27,7 @@ const DEFAULT_CONFIG: DeepResearchPromptConfig = {
 };
 
 function PromptBuilder() {
-  const { addResearch, setCurrentResearch, setUI, settings } = useAppStore();
+  const { addResearch, setCurrentResearch, setUI } = useAppStore();
   const [step, setStep] = useState(0);
   const [config, setConfig] = useState<DeepResearchPromptConfig>(DEFAULT_CONFIG);
   const [toolChoiceOverride, setToolChoiceOverride] = useState<'auto' | 'web_search_preview' | 'mcp'>('auto');
@@ -37,7 +36,6 @@ function PromptBuilder() {
   const [savePreset, setSavePreset] = useState(false);
   const [citationsToggle, setCitationsToggle] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [costEstimate, setCostEstimate] = useState(0);
   const [jsonCopied, setJsonCopied] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 

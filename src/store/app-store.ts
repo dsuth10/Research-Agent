@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
-import type { Research, PromptConfig } from '@/types/types'
+import type { Research } from '@/types/types'
 
 interface AppState {
   // Current research session
@@ -33,8 +33,8 @@ interface AppState {
 
 export const useAppStore = create<AppState>()(
   devtools(
-    persist(
-      (set, get) => ({
+      persist(
+      (set) => ({
         // Initial state
         currentResearch: null,
         researchHistory: [],

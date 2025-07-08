@@ -1,5 +1,4 @@
-import { fileOpen, fileSave, directoryOpen, supported } from 'browser-fs-access'
-import type { FileSystemHandle } from '@/lib/types'
+import { fileOpen, fileSave, supported } from 'browser-fs-access'
 
 export class FileSystemService {
   private directoryHandle: FileSystemDirectoryHandle | null = null
@@ -10,11 +9,11 @@ export class FileSystemService {
     }
 
     try {
-      this.directoryHandle = await window.showDirectoryPicker({
+      this.directoryHandle = await (window as any).showDirectoryPicker({
         mode: 'readwrite',
       })
     } catch (error) {
-      if (error.name === 'AbortError') {
+      if ((error as any).name === 'AbortError') {
         throw new Error('Directory selection cancelled')
       }
       throw error
@@ -34,7 +33,7 @@ export class FileSystemService {
         extensions: [this.getExtension(filename)],
       })
     } catch (error) {
-      if (error.name === 'AbortError') {
+      if ((error as any).name === 'AbortError') {
         throw new Error('Save cancelled')
       }
       throw error
