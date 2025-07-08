@@ -1,5 +1,4 @@
-Below is a pragmatic, component-level wire-frame you can adapt to any web stack (React, Vue, plain HTML).  The grouping matches the way the Deep Research API validates requests, so users don’t hit that 400-error wall.
-
+Below is a pragmatic, component-level wire-frame you can adapt to any web stack (React, Vue, plain HTML).  The grouping matches the way the Deep Research API validates requests
 ---
 
 ## 1. Page/Shell Layout
