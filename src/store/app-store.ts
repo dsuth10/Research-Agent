@@ -15,8 +15,6 @@ interface AppState {
 
   // Application settings
   settings: {
-    apiProvider: 'openai' | 'openrouter'
-    openaiApiKey: string
     openrouterApiKey: string
     promptModel: string
     researchModel: string
@@ -43,8 +41,6 @@ export const useAppStore = create<AppState>()(
         currentResearch: null,
         researchHistory: [],
         settings: {
-          apiProvider: 'openai',
-          openaiApiKey: (import.meta as any).env.VITE_OPENAI_API_KEY || '',
           openrouterApiKey: (import.meta as any).env.VITE_OPENROUTER_API_KEY || '',
           promptModel: 'gpt-4.1',
           researchModel: 'o3-deep-research-2025-06-26',

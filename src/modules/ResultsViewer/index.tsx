@@ -7,7 +7,7 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
 
 // Helper to parse citations in the report (e.g., [1], [2]) and link to sources
-function parseReportWithCitations(report: string, sources: Source[], onCiteClick: (idx: number) => void) {
+function parseReportWithCitations(report: string, onCiteClick: (idx: number) => void) {
   if (!report) return null;
   // Regex to match [1], [2], etc.
   const citationRegex = /\[(\d+)\]/g;
@@ -272,7 +272,7 @@ export const ResultsViewer: React.FC = () => {
         {activeTab === 'report' && (
           <div className="prose prose-gray dark:prose-invert max-w-none">
             <pre className="whitespace-pre-wrap leading-relaxed">
-              {parseReportWithCitations(filteredReport, sources, handleCitationClick) || 'No report available.'}
+              {parseReportWithCitations(filteredReport, handleCitationClick) || 'No report available.'}
             </pre>
             <div className="mt-4 text-xs text-muted-foreground">
               <span>Click citations (e.g., [1]) to view source details below.</span>

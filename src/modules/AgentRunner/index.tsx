@@ -10,18 +10,35 @@ const AgentRunner = () => {
   const { currentResearch, updateResearch, setUI } = useAppStore();
   const [progress, setProgress] = useState<'idle' | 'running' | 'completed' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
-  const [cost, setCost] = useState<{ inputTokens: number; outputTokens: number; totalCost: number }>({ inputTokens: 0, outputTokens: 0, totalCost: 0 });
   const [statusText, setStatusText] = useState('');
   const streamRef = useRef<ReadableStreamDefaultReader | null>(null);
 
-  // Helper to calculate cost from tokens
-  const calculateCost = (input: number, output: number) => {
-    // o3-deep-research: $10/1M input, $40/1M output tokens
-    return {
-      inputTokens: input,
-      outputTokens: output,
-      totalCost: (input / 1_000_000) * 10 + (output / 1_000_000) * 40,
-    };
+  // Helper to determine if model is o3/o4 (Deep Research)
+  const isDeepResearchModel = (model: string) => /o3|o4/i.test(model);
+
+  // Helper to build OpenRouter-compatible payload
+  const buildPayload = (cfg: any) => {
+    if (isDeepResearchModel(cfg.model)) {
+      return {
+        model: cfg.model,
+        input: [
+          { role: 'system', content: cfg.systemPrompt || '' },
+          { role: 'user', content: cfg.userPrompt }
+        ],
+        max_tokens: cfg.maxTokens,
+        // tools: cfg.tools, // Uncomment if you ever add o3/o4 support again
+        // background: cfg.background, // Uncomment if you ever add o3/o4 support again
+      };
+    } else {
+      return {
+        model: cfg.model,
+        input: [
+          { role: 'system', content: cfg.systemPrompt || '' },
+          { role: 'user', content: cfg.userPrompt }
+        ],
+        max_tokens: cfg.maxTokens,
+      };
+    }
   };
 
   // Start research task if needed
@@ -37,8 +54,9 @@ const AgentRunner = () => {
         if (currentResearch.status === 'pending') {
           setStatusText('Starting research...');
           updateResearch(currentResearch.id, { status: 'running' });
-          const config = JSON.parse(currentResearch.prompt) as DeepResearchPromptConfig;
-          const res = await aiService.runDeepResearch(config);
+          const rawConfig = JSON.parse(currentResearch.prompt);
+          const payload = buildPayload(rawConfig);
+          const res = await aiService.runDeepResearch(payload);
           responseId = res.responseId;
           stream = res.stream;
           updateResearch(currentResearch.id, { responseId, status: 'running' });
@@ -62,17 +80,14 @@ const AgentRunner = () => {
               setStatusText('Research complete!');
               // Fetch final result
               const result = await aiService.getResearchResult(responseId);
-              const costObj = calculateCost(result.usage.input_tokens, result.usage.output_tokens);
-              setCost(costObj);
               updateResearch(currentResearch.id, {
                 status: 'completed',
                 completedAt: new Date().toISOString(),
                 result: {
-                  report: result.output?.[0]?.content?.[0]?.text || '',
+                  report: result,
                   thoughtProcess: '', // To be filled if available
                   sources: [], // To be filled if available
                 },
-                cost: costObj,
               });
               setProgress('completed');
               setTimeout(() => setUI({ currentTab: 'results' }), 1000);
@@ -137,11 +152,6 @@ const AgentRunner = () => {
       {progress === 'error' && (
         <div className="text-destructive text-sm">{error} <Button onClick={handleRetry} size="sm">Retry</Button></div>
       )}
-      <div className="mt-2 text-xs text-muted-foreground">
-        <div>Input Tokens: {cost.inputTokens}</div>
-        <div>Output Tokens: {cost.outputTokens}</div>
-        <div>Total Cost: ${cost.totalCost.toFixed(4)}</div>
-      </div>
     </Card>
   );
 };

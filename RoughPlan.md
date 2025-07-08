@@ -1,6 +1,6 @@
 ## Executive summary
 
-The web-app will be a **self-contained React SPA** that wraps OpenAI’s Deep Research API. It walks the user from crafting a lean, high-signal prompt (with GPT-4.1) to running the research task (with the o3 reasoning model), then lets them explore, export and archive every artefact—**all saved locally in a user-chosen folder**. Optional hooks push the same content to a Notion database and, on demand, to any Obsidian vault the user selects. The design stays fully client-side: an `.env` file supplies each user’s personal OpenAI key, and the browser’s File System Access API handles read/write operations, so no server or cloud database is required. ([cookbook.openai.com](https://cookbook.openai.com/examples/deep_research_api/introduction_to_deep_research_api?utm_source=chatgpt.com), [openai.com](https://openai.com/index/introducing-deep-research/?utm_source=chatgpt.com), [developer.mozilla.org](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API?utm_source=chatgpt.com))
+The web-app will be a **self-contained React SPA** that wraps OpenRouter’s Deep Research API. It walks the user from crafting a lean, high-signal prompt (with GPT-4.1) to running the research task (with the o3 reasoning model), then lets them explore, export and archive every artefact—**all saved locally in a user-chosen folder**. Optional hooks push the same content to a Notion database and, on demand, to any Obsidian vault the user selects. The design stays fully client-side: an `.env` file supplies each user’s personal OpenAI key, and the browser’s File System Access API handles read/write operations, so no server or cloud database is required. ([cookbook.openai.com](https://cookbook.openai.com/examples/deep_research_api/introduction_to_deep_research_api?utm_source=chatgpt.com), [openai.com](https://openai.com/index/introducing-deep-research/?utm_source=chatgpt.com), [developer.mozilla.org](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API?utm_source=chatgpt.com))
 
 
 In brief: a well-structured React app can wrap the Deep Research API by splitting its workflow into discrete modules—Prompt Builder, Agent Runner, Results Viewer, Export & Sync, and Task Log—each communicating through shared context or an event bus.  Leveraging model-specific UI, streaming updates, and export libraries lets the app orchestrate O 3 for research and GPT-4.1 for prompt-crafting while archiving every artefact (prompts, chain-of-thought, final report) as Markdown, DOCX, and PDF.  Adding optional back-ends for vector search (pgvector/Supabase), Notion page creation, and Obsidian vault sync turns it into a one-stop research cockpit.  Below is a detailed architecture outline plus suggestions for pushing the idea further.
@@ -24,19 +24,19 @@ Each module is a standalone folder with its own store slice, allowing future ext
 
 ### 2.1 Prompt Builder
 
-* Multi-step wizard asks “Research goal”, “Key constraints”, “Preferred depth”, etc., then shows live token estimate to keep under budget, echoing the Cookbook guidance ([cookbook.openai.com](https://cookbook.openai.com/examples/deep_research_api/introduction_to_deep_research_api_agents?utm_source=chatgpt.com)).
+* Multi-step wizard asks "Research goal", "Key constraints", "Preferred depth", etc., then shows live token estimate to keep under budget, echoing the Cookbook guidance ([cookbook.openai.com](https://cookbook.openai.com/examples/deep_research_api/introduction_to_deep_research_api_agents?utm_source=chatgpt.com)).
 * Model selector drop-down defaults to **GPT-4.1** for prompt generation and **O 3** for research; versions are fetched dynamically from the OpenAI models endpoint and cached with TanStack Query ([tanstack.com](https://tanstack.com/query/v4/docs/framework/react/overview?utm_source=chatgpt.com)).
-* Output: final compiled Markdown prompt, displayed with a **“Download .md”** button.
+* Output: final compiled Markdown prompt, displayed with a **"Download .md"** button.
 
 ### 2.2 Agent Runner
 
-* Sends the prompt to the Deep Research endpoint; streams the tool’s self-talk and interim findings to a progress pane, similar to the Guardian/The Verge demos of the feature ([theguardian.com](https://www.theguardian.com/technology/2025/feb/03/openai-deep-research-agent-chatgpt-deepseek?utm_source=chatgpt.com), [theverge.com](https://www.theverge.com/news/604902/chagpt-deep-research-ai-agent?utm_source=chatgpt.com)).
+* Sends the prompt to the Deep Research endpoint; streams the tool's self-talk and interim findings to a progress pane, similar to the Guardian/The Verge demos of the feature ([theguardian.com](https://www.theguardian.com/technology/2025/feb/03/openai-deep-research-agent-chatgpt-deepseek?utm_source=chatgpt.com), [theverge.com](https://www.theverge.com/news/604902/chagpt-deep-research-ai-agent?utm_source=chatgpt.com)).
 * On completion, receives a JSON object containing `report`, `thought_process`, `citations`.
 
 ### 2.3 Results Viewer
 
 * Three tabs: **Report**, **Thought Process**, **Sources**.
-* Timeline component shows agent’s sub-questions and answers as cards.
+* Timeline component shows agent's sub-questions and answers as cards.
 * Each citation links out and is stored alongside an `archived_at` timestamp for provenance.
 
 ### 2.4 Export & Sync
@@ -68,11 +68,11 @@ Each module is a standalone folder with its own store slice, allowing future ext
 ### 3.3 Knowledge-base integration
 
 * Automatic push of report plus embeddings into a shared Supabase or Pinecone index so later prompts can cite earlier research.
-* Notion database view that aggregates “Research Topic”, “Date”, “Key Findings”, linking back to exported files.
+* Notion database view that aggregates "Research Topic", "Date", "Key Findings", linking back to exported files.
 
 ### 3.4 Automation hooks
 
-* Let users schedule periodic “update this research” runs (weekly cron) and notify via email or Slack.
+* Let users schedule periodic "update this research" runs (weekly cron) and notify via email or Slack.
 * Webhook to Flowise/n8n so research outputs can trigger downstream workflows (e.g., auto-generate slide decks).
 
 ### 3.5 Accessibility & UI polish
@@ -125,7 +125,7 @@ Let me know which directions resonate, and I can drill down into implementation 
 
 ## 2  Storage, security & configuration
 
-* **Purely local files** – the File System Access API lets users grant the app permission once and then read/write every artefact directly to disk, matching the “Documents”-folder preference and working offline. ([developer.mozilla.org](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API?utm_source=chatgpt.com), [web.dev](https://web.dev/patterns/files/save-a-file/?utm_source=chatgpt.com))
+* **Purely local files** – the File System Access API lets users grant the app permission once and then read/write every artefact directly to disk, matching the "Documents"-folder preference and working offline. ([developer.mozilla.org](https://developer.mozilla.org/en-US/docs/Web/API/File_System_API?utm_source=chatgpt.com), [web.dev](https://web.dev/patterns/files/save-a-file/?utm_source=chatgpt.com))
 * **Environment variables** – each user creates a `.env` (plus an `example.env`) at the project root:
 
   ```
@@ -134,7 +134,7 @@ Let me know which directions resonate, and I can drill down into implementation 
 
   Create-React-App (or Vite) exposes it as `import.meta.env`. ([create-react-app.dev](https://create-react-app.dev/docs/adding-custom-environment-variables/?utm_source=chatgpt.com), [stackoverflow.com](https://stackoverflow.com/questions/75152513/how-to-create-a-env-with-with-the-apikey-of-openai-in-a-react-app?utm_source=chatgpt.com))
 * **No hosted DB** – task history lives in `manifest.json`; if semantic search is later desired, embeddings can be kept in a local JSON vector file.
-* **API key stays private** – because everything runs in the browser, the key never leaves the user’s machine. Best-practice notes still apply. ([help.openai.com](https://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety?utm_source=chatgpt.com))
+* **API key stays private** – because everything runs in the browser, the key never leaves the user's machine. Best-practice notes still apply. ([help.openai.com](https://help.openai.com/en/articles/5112595-best-practices-for-api-key-safety?utm_source=chatgpt.com))
 
 ---
 
@@ -142,7 +142,7 @@ Let me know which directions resonate, and I can drill down into implementation 
 
 ### Markdown
 
-Prompt, report and chain-of-thought are already Markdown; they’re saved verbatim.
+Prompt, report and chain-of-thought are already Markdown; they're saved verbatim.
 
 ### DOCX
 
@@ -169,7 +169,7 @@ Render the report tab to canvas with **html2canvas**, then pipe into **jsPDF** o
 | -------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Cost control**           | Depth slider adjusts agent recursion level; live cost estimate               | prevents token overruns                                                                                                                                                                           |
 | **Quality assurance**      | GPT-4.1 self-critique pass summarises gaps, suggests follow-ups              | higher trust                                                                                                                                                                                      |
-| **Trusted sources**        | Domain allow-list fed to agent’s search tool                                 | research reliability                                                                                                                                                                              |
+| **Trusted sources**        | Domain allow-list fed to agent's search tool                                 | research reliability                                                                                                                                                                              |
 | **Collaboration**          | Optional shared prompt editing via **Y.js** CRDT layer                       | pairs or student groups can co-design prompts in real time ([dev.to](https://dev.to/route06/tutorial-building-a-collaborative-editing-app-with-yjs-valtio-and-react-1mcl?utm_source=chatgpt.com)) |
 | **Automation hooks**       | Schedule re-runs via OS cron + desktop notifications; Flowise/n8n webhook    | keeps research up-to-date                                                                                                                                                                         |
 | **Accessibility & polish** | WAI-ARIA labels, keyboard shortcuts, metric unit defaults, responsive layout | meets classroom needs                                                                                                                                                                             |

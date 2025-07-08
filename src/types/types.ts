@@ -56,31 +56,6 @@ export interface FileSystemHandle {
   name: string
 }
 
-// OpenAI API types
-export interface OpenAIResponse {
-  id: string
-  object: string
-  created_at: number
-  status: 'completed' | 'running' | 'failed'
-  model: string
-  output: Array<{
-    type: 'message'
-    id: string
-    status: 'completed'
-    role: 'assistant'
-    content: Array<{
-      type: 'output_text'
-      text: string
-    }>
-  }>
-  usage: {
-    input_tokens: number
-    output_tokens: number
-    reasoning_tokens: number
-    total_tokens: number
-  }
-}
-
 export interface DeepResearchTool {
   type: 'web_search_preview' | 'mcp';
   search_context_size?: 'low' | 'medium' | 'high';

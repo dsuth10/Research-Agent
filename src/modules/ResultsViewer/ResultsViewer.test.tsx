@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ResultsViewer } from './index';
 import { useAppStore } from '@/store/app-store';
-import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock Zustand store

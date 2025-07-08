@@ -3,7 +3,7 @@ import { useAppStore } from '@/store/app-store'
 import Button from '@/components/Button'
 
 export default function Header() {
-  const { ui, setUI, settings } = useAppStore()
+  const { ui, setUI } = useAppStore()
 
   const toggleSidebar = () => {
     setUI({ sidebarOpen: !ui.sidebarOpen })
@@ -26,11 +26,6 @@ export default function Header() {
             <Menu className="h-4 w-4" />
           </Button>
           <h1 className="text-xl font-semibold">Research Wrapper</h1>
-          {!settings.openaiApiKey && (
-            <span className="text-xs bg-destructive text-destructive-foreground px-2 py-1 rounded">
-              API Key Required
-            </span>
-          )}
         </div>
         <div className="flex items-center gap-2">
           <Button

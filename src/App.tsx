@@ -13,19 +13,15 @@ export default function App() {
 
   // Initialize AI service based on provider
   useEffect(() => {
-    if (settings.apiProvider === 'openrouter') {
-      if (settings.openrouterApiKey) {
-        aiService.setConfig({
-          apiKey: settings.openrouterApiKey,
-          baseUrl: 'https://openrouter.ai/api/v1',
-          headers: {
-            'HTTP-Referer': window.location.origin,
-            'X-Title': 'Research Agent',
-          },
-        })
-      }
-    } else if (settings.openaiApiKey) {
-      aiService.setConfig({ apiKey: settings.openaiApiKey })
+    if (settings.openrouterApiKey) {
+      aiService.setConfig({
+        apiKey: settings.openrouterApiKey,
+        baseUrl: 'https://openrouter.ai/api/v1',
+        headers: {
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'Research Agent',
+        },
+      })
     }
   }, [settings])
 

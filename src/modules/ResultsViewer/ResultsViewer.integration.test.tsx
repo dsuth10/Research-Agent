@@ -1,7 +1,6 @@
 import { render, screen, act } from '@testing-library/react';
 import { ResultsViewer } from './index';
 import { useAppStore } from '@/store/app-store';
-import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 vi.mock('@/store/app-store', async () => {
@@ -14,7 +13,7 @@ vi.mock('@/store/app-store', async () => {
       get currentResearch() { return currentResearch; },
       set currentResearch(val: any) { currentResearch = val; listeners.forEach(fn => fn()); },
       setUI: vi.fn(),
-      updateResearch: (id: string, updates: any) => {
+      updateResearch: (updates: any) => {
         currentResearch = { ...currentResearch, ...updates };
         listeners.forEach(fn => fn());
       },

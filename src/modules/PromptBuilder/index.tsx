@@ -7,7 +7,6 @@ import Textarea from '@/components/Textarea';
 import Select from '@/components/Select';
 import { useAppStore } from '@/store/app-store';
 import { calculateCost, generateId } from '@/utils/utils';
-import type { DeepResearchPromptConfig, DeepResearchTool } from '@/types/types';
 import { fetchOpenRouterModels } from '@/services/openrouter-service';
 
 const SIDEBAR_STEPS = [
@@ -18,27 +17,39 @@ const SIDEBAR_STEPS = [
   { id: 4, label: 'Preview JSON' },
 ];
 
-const BASE_CONFIG: Omit<DeepResearchPromptConfig, 'model'> = {
+// Define OpenRouter-compatible config and tool types
+interface OpenRouterTool {
+  type: 'web_search_preview';
+}
+interface OpenRouterPromptConfig {
+  userPrompt: string;
+  systemPrompt?: string;
+  model: string;
+  maxTokens: number;
+  tools: OpenRouterTool[];
+  background?: boolean;
+}
+
+const BASE_CONFIG: OpenRouterPromptConfig = {
   userPrompt: '',
   systemPrompt: '',
+  model: '',
   maxTokens: 2000,
-  tools: [{ type: 'web_search_preview', search_context_size: 'medium' }],
-  reasoning: { summary: 'auto', effort: 'medium' },
+  tools: [{ type: 'web_search_preview' }],
   background: true,
 };
+
+// Helper to determine if model is o3/o4 (Deep Research)
+const isDeepResearchModel = (model: string) => /o3|o4/i.test(model);
 
 function PromptBuilder() {
   const { addResearch, setCurrentResearch, setUI, settings } = useAppStore();
   const [step, setStep] = useState(0);
-  const [config, setConfig] = useState<DeepResearchPromptConfig>({
+  const [config, setConfig] = useState<OpenRouterPromptConfig>({
     ...BASE_CONFIG,
     model: settings.researchModel,
   });
-  const [toolChoiceOverride, setToolChoiceOverride] = useState<'auto' | 'web_search_preview' | 'mcp'>('auto');
-  const [webhookEnabled, setWebhookEnabled] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
-  const [savePreset, setSavePreset] = useState(false);
-  const [citationsToggle, setCitationsToggle] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [jsonCopied, setJsonCopied] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -46,7 +57,7 @@ function PromptBuilder() {
   const { data: routerModels } = useQuery({
     queryKey: ['openrouter-models', settings.openrouterApiKey],
     queryFn: () => fetchOpenRouterModels(settings.openrouterApiKey),
-    enabled: settings.apiProvider === 'openrouter' && !!settings.openrouterApiKey,
+    enabled: !!settings.openrouterApiKey,
   });
 
   // Step navigation
@@ -63,11 +74,9 @@ function PromptBuilder() {
     if (stepIdx === 2) {
       if (!config.tools || config.tools.length === 0) return false;
       for (const tool of config.tools) {
-        if (tool.type === 'mcp') {
-          if (!tool.server_label || !tool.server_url) return false;
-        }
+        if (tool.type === 'web_search_preview') return true;
       }
-      return true;
+      return false;
     }
     return true;
   };
@@ -81,13 +90,7 @@ function PromptBuilder() {
       if (!config.maxTokens || config.maxTokens < 100) newErrors.maxTokens = 'Max tokens must be at least 100';
     }
     if (stepIdx === 2) {
-      if (!config.tools || config.tools.length === 0) newErrors.tools = 'Select at least one tool (required by Deep Research models)';
-      for (const tool of config.tools) {
-        if (tool.type === 'mcp') {
-          if (!tool.server_label) newErrors.server_label = 'MCP server label required';
-          if (!tool.server_url) newErrors.server_url = 'MCP server URL required';
-        }
-      }
+      if (!config.tools || config.tools.length === 0) newErrors.tools = 'Select at least one tool (required by OpenRouter models)';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -95,21 +98,42 @@ function PromptBuilder() {
 
   // Cost estimator
   const tokenEstimate = config.maxTokens || 2000;
-  const modelKey = config.model.startsWith('o4') ? 'o3-deep-research' : 'o3-deep-research'; // Use o3 pricing for both for now
+  const modelKey = typeof config.model === 'string' && config.model.startsWith('o4') ? 'o3-deep-research' : 'o3-deep-research'; // Use o3 pricing for both for now
   const cost = useMemo(() => calculateCost(tokenEstimate, 0, modelKey), [tokenEstimate, modelKey]);
 
   // Handle field changes
-  const updateConfig = (patch: Partial<DeepResearchPromptConfig>) => setConfig(prev => ({ ...prev, ...patch }));
+  const updateConfig = (patch: Partial<OpenRouterPromptConfig>) => setConfig(prev => ({ ...prev, ...patch }));
 
-  // Handle tool array changes
-  const updateTool = (idx: number, patch: Partial<DeepResearchTool>) => {
-    setConfig(prev => ({
-      ...prev,
-      tools: prev.tools.map((t, i) => (i === idx ? { ...t, ...patch } : t)),
-    }));
-  };
-  const addTool = (tool: DeepResearchTool) => setConfig(prev => ({ ...prev, tools: [...prev.tools, tool] }));
+  // Handle tool array changes (only web_search_preview supported)
+  const addTool = (tool: OpenRouterTool) => setConfig(prev => ({ ...prev, tools: [...prev.tools, tool] }));
   const removeTool = (idx: number) => setConfig(prev => ({ ...prev, tools: prev.tools.filter((_, i) => i !== idx) }));
+
+  // In handleRun and previewPayload, construct payload based on model type
+  const buildPayload = (cfg: OpenRouterPromptConfig) => {
+    if (isDeepResearchModel(cfg.model)) {
+      // For o3/o4 models, include tools/background if needed (not used here, but left for future)
+      return {
+        model: cfg.model,
+        input: [
+          { role: 'system', content: cfg.systemPrompt || '' },
+          { role: 'user', content: cfg.userPrompt }
+        ],
+        max_tokens: cfg.maxTokens,
+        // tools: cfg.tools, // Uncomment if you ever add o3/o4 support again
+        // background: cfg.background, // Uncomment if you ever add o3/o4 support again
+      };
+    } else {
+      // For non-o3/o4 models, only include model, input, max_tokens
+      return {
+        model: cfg.model,
+        input: [
+          { role: 'system', content: cfg.systemPrompt || '' },
+          { role: 'user', content: cfg.userPrompt }
+        ],
+        max_tokens: cfg.maxTokens,
+      };
+    }
+  };
 
   // Handle Run
   const handleRun = async () => {
@@ -119,14 +143,7 @@ function PromptBuilder() {
     }
     setIsRunning(true);
     try {
-      const payload: DeepResearchPromptConfig = {
-        ...config,
-        tool_choice: toolChoiceOverride !== 'auto' ? { type: toolChoiceOverride } : undefined,
-        webhook_url: webhookEnabled ? config.webhook_url : undefined,
-      };
-      if (savePreset) {
-        // Save to localStorage or backend
-      }
+      const payload = buildPayload(config);
       const research = {
         id: generateId(),
         title: config.userPrompt.substring(0, 100),
@@ -160,11 +177,7 @@ function PromptBuilder() {
   }, []);
 
   // JSON preview
-  const previewPayload: DeepResearchPromptConfig = {
-    ...config,
-    tool_choice: toolChoiceOverride !== 'auto' ? { type: toolChoiceOverride } : undefined,
-    webhook_url: webhookEnabled ? config.webhook_url : undefined,
-  };
+  const previewPayload = buildPayload(config);
   const previewJson = JSON.stringify(previewPayload, null, 2);
 
   // UI for each step
@@ -211,16 +224,9 @@ function PromptBuilder() {
                 value={config.model}
                 onChange={e => updateConfig({ model: e.target.value as any })}
               >
-                {settings.apiProvider === 'openrouter' && routerModels
-                  ? routerModels.map(m => (
-                      <option key={m.id} value={m.id}>{m.name}</option>
-                    ))
-                  : (
-                    <>
-                      <option value="o3-deep-research-2025-06-26">o3-deep-research</option>
-                      <option value="o4-mini-deep-research-2025-06-26">o4-mini-deep-research</option>
-                    </>
-                  )}
+                {routerModels && routerModels.map(m => (
+                  <option key={m.id} value={m.id}>{m.name}</option>
+                ))}
               </Select>
               {errors.model && <div className="text-xs text-destructive">{errors.model}</div>}
             </div>
@@ -229,7 +235,7 @@ function PromptBuilder() {
               <Input
                 type="number"
                 min={100}
-                max={config.model.includes('o4-mini') ? 64000 : 128000}
+                max={typeof config.model === 'string' && config.model.includes('o4-mini') ? 64000 : 128000}
                 value={config.maxTokens}
                 onChange={e => updateConfig({ maxTokens: Number(e.target.value) })}
               />
@@ -240,12 +246,12 @@ function PromptBuilder() {
               <div className="w-full bg-accent h-2 rounded">
                 <div
                   className="bg-primary h-2 rounded"
-                  style={{ width: `${Math.min(100, (config.maxTokens / (config.model.includes('o4-mini') ? 64000 : 128000)) * 100)}%` }}
+                  style={{ width: `${Math.min(100, (config.maxTokens / ((typeof config.model === 'string' && config.model.includes('o4-mini')) ? 64000 : 128000)) * 100)}%` }}
                 />
               </div>
               <div className="flex justify-between text-xs text-muted-foreground mt-1">
                 <span>Context used: {config.maxTokens}</span>
-                <span>Limit: {config.model.includes('o4-mini') ? '64,000' : '128,000'}</span>
+                <span>Limit: {(typeof config.model === 'string' && config.model.includes('o4-mini')) ? '64,000' : '128,000'}</span>
               </div>
             </div>
           </div>
@@ -253,145 +259,13 @@ function PromptBuilder() {
       case 2:
         return (
           <div className="space-y-6">
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={!!config.tools.find(t => t.type === 'web_search_preview')}
-                onChange={e => {
-                  if (e.target.checked) addTool({ type: 'web_search_preview', search_context_size: 'medium' });
-                  else removeTool(config.tools.findIndex(t => t.type === 'web_search_preview'));
-                }}
-                id="web_search_preview"
-              />
-              <label htmlFor="web_search_preview" className="font-medium">Enable Web Search Preview</label>
-              {config.tools.find(t => t.type === 'web_search_preview') && (
-                <Select
-                  value={config.tools.find(t => t.type === 'web_search_preview')?.search_context_size || 'medium'}
-                  onChange={e => updateTool(config.tools.findIndex(t => t.type === 'web_search_preview'), { search_context_size: e.target.value as any })}
-                  className="ml-2 w-32"
-                >
-                  <option value="low">low</option>
-                  <option value="medium">medium</option>
-                  <option value="high">high</option>
-                </Select>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={!!config.tools.find(t => t.type === 'mcp')}
-                onChange={e => {
-                  if (e.target.checked) addTool({ type: 'mcp', server_label: '', server_url: '', require_approval: 'never' });
-                  else removeTool(config.tools.findIndex(t => t.type === 'mcp'));
-                }}
-                id="mcp"
-              />
-              <label htmlFor="mcp" className="font-medium">Enable MCP (private data)</label>
-            </div>
-            {config.tools.find(t => t.type === 'mcp') && (
-              <div className="space-y-2 ml-6">
-                <Input
-                  placeholder="Server label"
-                  value={config.tools.find(t => t.type === 'mcp')?.server_label || ''}
-                  onChange={e => updateTool(config.tools.findIndex(t => t.type === 'mcp'), { server_label: e.target.value })}
-                />
-                <Input
-                  placeholder="Server URL"
-                  value={config.tools.find(t => t.type === 'mcp')?.server_url || ''}
-                  onChange={e => updateTool(config.tools.findIndex(t => t.type === 'mcp'), { server_url: e.target.value })}
-                />
-                <Select
-                  value={config.tools.find(t => t.type === 'mcp')?.require_approval || 'never'}
-                  onChange={e => updateTool(config.tools.findIndex(t => t.type === 'mcp'), { require_approval: e.target.value as any })}
-                >
-                  <option value="never">never</option>
-                  <option value="auto">auto</option>
-                  <option value="manual">manual</option>
-                </Select>
-                {errors.server_label && <div className="text-xs text-destructive">{errors.server_label}</div>}
-                {errors.server_url && <div className="text-xs text-destructive">{errors.server_url}</div>}
-              </div>
-            )}
-            {(!config.tools || config.tools.length === 0) && (
-              <div className="text-xs text-destructive">{errors.tools || 'Select at least one tool (required by Deep Research models).'}</div>
-            )}
-            {config.tools.length > 1 && (
-              <div className="mt-4">
-                <label className="block text-sm font-medium mb-2">Tool Choice Override</label>
-                <Select
-                  value={toolChoiceOverride}
-                  onChange={e => setToolChoiceOverride(e.target.value as any)}
-                  className="w-48"
-                >
-                  <option value="auto">auto</option>
-                  <option value="web_search_preview">web_search_preview</option>
-                  <option value="mcp">mcp</option>
-                </Select>
-              </div>
-            )}
+            {/* Remove: 'Enable Web Search Preview' checkbox and logic from case 2 in renderStep */}
           </div>
         );
       case 3:
         return (
           <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium mb-2">Reasoning summary</label>
-              <Select
-                value={config.reasoning?.summary || 'auto'}
-                onChange={e => updateConfig({ reasoning: { summary: e.target.value as any, effort: config.reasoning?.effort || 'medium' } })}
-              >
-                <option value="auto">auto</option>
-                <option value="concise">concise</option>
-                <option value="detailed">detailed</option>
-              </Select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Reasoning effort</label>
-              <Select
-                value={config.reasoning?.effort || 'medium'}
-                onChange={e => updateConfig({ reasoning: { effort: e.target.value as any, summary: config.reasoning?.summary || 'auto' } })}
-              >
-                <option value="low">low</option>
-                <option value="medium">medium</option>
-                <option value="high">high</option>
-              </Select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Seed (replay)</label>
-              <Input
-                type="number"
-                value={config.seed || ''}
-                onChange={e => updateConfig({ seed: e.target.value ? Number(e.target.value) : undefined })}
-                placeholder="Optional seed for deterministic runs"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={config.background}
-                onChange={e => updateConfig({ background: e.target.checked })}
-                id="background"
-              />
-              <label htmlFor="background">Run asynchronously</label>
-            </div>
-            <div className="mt-2">
-              <input
-                type="checkbox"
-                checked={webhookEnabled}
-                onChange={e => setWebhookEnabled(e.target.checked)}
-                id="webhook"
-              />
-              <label htmlFor="webhook" className="ml-2">Webhook URL</label>
-              {webhookEnabled && (
-                <Input
-                  className="mt-2"
-                  value={config.webhook_url || ''}
-                  onChange={e => updateConfig({ webhook_url: e.target.value })}
-                  placeholder="https://yourapp.com/openai/webhook"
-                />
-              )}
-            </div>
-            <div className="text-xs text-muted-foreground mt-1">Async saves browser waiting time; results will POST to your webhook.</div>
+            {/* Remove: 'Run asynchronously' checkbox and logic from case 3 in renderStep */}
           </div>
         );
       case 4:
@@ -437,9 +311,6 @@ function PromptBuilder() {
         <Card className="max-w-3xl mx-auto">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-semibold">Deep Research Job Config</h1>
-            <Button size="sm" variant={savePreset ? 'secondary' : 'outline'} onClick={() => setSavePreset(v => !v)} title="Save as preset">
-              ★
-            </Button>
           </div>
           <div className="mb-6">
             <div className="flex gap-2 items-center">
@@ -462,10 +333,6 @@ function PromptBuilder() {
               {isRunning ? 'Running...' : 'Run ▶'}
             </Button>
             <div className="text-xs text-muted-foreground ml-4">Cost estimate: ~AUD ${cost.toFixed(4)}</div>
-            <div className="flex items-center ml-4">
-              <input type="checkbox" checked={citationsToggle} onChange={e => setCitationsToggle(e.target.checked)} id="citations" />
-              <label htmlFor="citations" className="ml-1 text-xs">Citations in output</label>
-            </div>
           </div>
         </div>
       </main>
