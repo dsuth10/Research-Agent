@@ -45,7 +45,7 @@ A modern, scalable React SPA that wraps OpenAI's Deep Research API, providing a 
 - **Forms**: React Hook Form v7, Zod
 - **Styling**: Tailwind CSS, shadcn/ui patterns
 - **Export**: pdf-lib, docx.js, markdown-it
-- **API**: OpenAI (o3-deep-research-2025-06-26, GPT-4.1)
+- **API**: OpenAI (o3-deep-research-2025-06-26, GPT-4.1) or OpenRouter
 - **File System**: File System Access API, browser-fs-access
 - **Testing**: Vitest, React Testing Library, Playwright
 
@@ -74,7 +74,7 @@ A modern, scalable React SPA that wraps OpenAI's Deep Research API, providing a 
 - `Complete Technical Guide.md` — Full technical documentation
 
 ## Security
-- API keys are managed client-side via `.env.local` (never committed)
+- API keys are managed client-side via `.env.local` (never committed). Use `VITE_OPENAI_API_KEY` or `VITE_OPENROUTER_API_KEY` depending on the provider.
 - All file operations require explicit user consent
 - HTTPS required for full functionality
 

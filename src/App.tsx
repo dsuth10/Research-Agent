@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useAppStore } from '@/store/app-store'
-import { openaiService } from '@/services/openai-service'
+import { aiService } from '@/services/ai-service'
 import Layout from '@/components/Layout'
 import PromptBuilder from '@/modules/PromptBuilder'
 import AgentRunner from '@/modules/AgentRunner'
@@ -11,12 +11,23 @@ import Settings from '@/modules/Settings'
 export default function App() {
   const { ui, settings } = useAppStore()
 
-  // Initialize OpenAI service with API key
+  // Initialize AI service based on provider
   useEffect(() => {
-    if (settings.openaiApiKey) {
-      openaiService.setApiKey(settings.openaiApiKey)
+    if (settings.apiProvider === 'openrouter') {
+      if (settings.openrouterApiKey) {
+        aiService.setConfig({
+          apiKey: settings.openrouterApiKey,
+          baseUrl: 'https://openrouter.ai/api/v1',
+          headers: {
+            'HTTP-Referer': window.location.origin,
+            'X-Title': 'Research Agent',
+          },
+        })
+      }
+    } else if (settings.openaiApiKey) {
+      aiService.setConfig({ apiKey: settings.openaiApiKey })
     }
-  }, [settings.openaiApiKey])
+  }, [settings])
 
   // Add dark mode class to document
   useEffect(() => {

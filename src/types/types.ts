@@ -40,7 +40,7 @@ export interface PromptConfig {
   scope: string
   constraints: string
   depth: 'low' | 'medium' | 'high'
-  model: 'gpt-4.1' | 'o3-deep-research'
+  model: string
   maxTokens?: number
 }
 
@@ -97,7 +97,7 @@ export interface DeepResearchReasoning {
 export interface DeepResearchPromptConfig {
   userPrompt: string;
   systemPrompt?: string;
-  model: 'o3-deep-research-2025-06-26' | 'o4-mini-deep-research-2025-06-26';
+  model: string;
   maxTokens: number;
   tools: DeepResearchTool[];
   tool_choice?: { type: 'web_search_preview' | 'mcp' };

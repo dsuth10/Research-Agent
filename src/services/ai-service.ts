@@ -25,21 +25,26 @@ function mapUsage(apiUsage: any): OpenAIResponse['usage'] {
   }
 }
 
-class OpenAIService {
+export interface AIServiceConfig {
+  apiKey: string
+  baseUrl?: string
+  headers?: Record<string, string>
+}
+
+class AIService {
   private client: OpenAI | null = null
 
-  constructor(apiKey?: string) {
-    if (apiKey) {
-      this.client = new OpenAI({
-        apiKey,
-        dangerouslyAllowBrowser: true, // Required for client-side usage
-      })
+  constructor(config?: AIServiceConfig) {
+    if (config?.apiKey) {
+      this.setConfig(config)
     }
   }
 
-  setApiKey(apiKey: string) {
+  setConfig(config: AIServiceConfig) {
     this.client = new OpenAI({
-      apiKey,
+      apiKey: config.apiKey,
+      baseURL: config.baseUrl,
+      defaultHeaders: config.headers,
       dangerouslyAllowBrowser: true,
     })
   }
@@ -61,12 +66,9 @@ Create a clear, specific prompt that will guide a research AI to produce compreh
 Return only the optimized research prompt, nothing else.`
 
     const response = await this.client.chat.completions.create({
-      model: 'gpt-4.1',
+      model: config.model,
       messages: [
-        {
-          role: 'user',
-          content: promptEnhancementPrompt,
-        },
+        { role: 'user', content: promptEnhancementPrompt },
       ],
       max_tokens: config.maxTokens || 500,
       temperature: 0.3,
@@ -83,13 +85,11 @@ Return only the optimized research prompt, nothing else.`
       throw new Error('OpenAI client not initialized')
     }
 
-    // Compose the input array for the API
     const input = [
       { role: 'developer', content: [{ type: 'input_text', text: config.systemPrompt || '' }] },
       { role: 'user', content: [{ type: 'input_text', text: config.userPrompt }] },
     ]
 
-    // Build the payload
     const payload: any = {
       model: config.model,
       input,
@@ -98,90 +98,83 @@ Return only the optimized research prompt, nothing else.`
       webhook_url: config.webhook_url,
       seed: config.seed,
     }
-    if (config.reasoning) payload.reasoning = config.reasoning;
-    if (config.tool_choice) payload.tool_choice = config.tool_choice;
+    if (config.reasoning) payload.reasoning = config.reasoning
+    if (config.tool_choice) payload.tool_choice = config.tool_choice
 
-    // Remove undefined fields
-    Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k]);
+    Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k])
 
-    // Create research task
-    const response = await this.client.responses.create(payload);
+    const response = await this.client.responses.create(payload)
 
-    const responseId = response.id;
-    const self = this;
+    const responseId = response.id
+    const self = this
 
-    // Create a stream for progress updates
     const stream = new ReadableStream<string>({
       async start(controller) {
-        // Poll for updates
         const pollForUpdates = async () => {
           try {
-            const status = await self.client!.responses.retrieve(responseId);
-            const mappedStatus = mapStatus(status.status);
+            const status = await self.client!.responses.retrieve(responseId)
+            const mappedStatus = mapStatus(status.status)
             const mapped = {
               ...status,
               status: mappedStatus,
               usage: mapUsage(status.usage),
-            };
+            }
             if (mapped.status === 'completed') {
-              controller.enqueue(JSON.stringify(mapped));
-              controller.close();
-              return;
+              controller.enqueue(JSON.stringify(mapped))
+              controller.close()
+              return
             }
             if (mapped.status === 'failed') {
-              controller.error(new Error('Research failed'));
-              return;
+              controller.error(new Error('Research failed'))
+              return
             }
-            // Send progress update
-            controller.enqueue(JSON.stringify({ status: 'running', id: responseId }));
-            // Continue polling
-            setTimeout(pollForUpdates, 2000);
+            controller.enqueue(JSON.stringify({ status: 'running', id: responseId }))
+            setTimeout(pollForUpdates, 2000)
           } catch (error) {
-            controller.error(error);
+            controller.error(error)
           }
-        };
-        pollForUpdates();
+        }
+        pollForUpdates()
       },
-    });
+    })
 
-    return { responseId, stream };
+    return { responseId, stream }
   }
 
-  /** Create a progress stream for an existing response ID */
   createProgressStream(responseId: string): ReadableStream<string> {
     if (!this.client) {
-      throw new Error('OpenAI client not initialized');
+      throw new Error('OpenAI client not initialized')
     }
-    const self = this;
+    const self = this
     return new ReadableStream<string>({
       async start(controller) {
         const pollForUpdates = async () => {
           try {
-            const status = await self.client!.responses.retrieve(responseId);
-            const mappedStatus = mapStatus(status.status);
+            const status = await self.client!.responses.retrieve(responseId)
+            const mappedStatus = mapStatus(status.status)
             const mapped = {
               ...status,
               status: mappedStatus,
               usage: mapUsage(status.usage),
-            };
+            }
             if (mapped.status === 'completed') {
-              controller.enqueue(JSON.stringify(mapped));
-              controller.close();
-              return;
+              controller.enqueue(JSON.stringify(mapped))
+              controller.close()
+              return
             }
             if (mapped.status === 'failed') {
-              controller.error(new Error('Research failed'));
-              return;
+              controller.error(new Error('Research failed'))
+              return
             }
-            controller.enqueue(JSON.stringify({ status: 'running', id: responseId }));
-            setTimeout(pollForUpdates, 2000);
+            controller.enqueue(JSON.stringify({ status: 'running', id: responseId }))
+            setTimeout(pollForUpdates, 2000)
           } catch (error) {
-            controller.error(error);
+            controller.error(error)
           }
-        };
-        pollForUpdates();
+        }
+        pollForUpdates()
       },
-    });
+    })
   }
 
   async getResearchResult(responseId: string): Promise<OpenAIResponse> {
@@ -198,5 +191,5 @@ Return only the optimized research prompt, nothing else.`
   }
 }
 
-export const openaiService = new OpenAIService()
-export default OpenAIService
+export const aiService = new AIService()
+export default AIService
