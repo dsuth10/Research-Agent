@@ -122,6 +122,7 @@ function PromptBuilder() {
         title: config.userPrompt.substring(0, 100),
         prompt: JSON.stringify(payload, null, 2),
         status: 'pending' as const,
+        responseId: undefined,
         createdAt: new Date().toISOString(),
       };
       addResearch(research);

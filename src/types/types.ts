@@ -5,6 +5,8 @@ export interface Research {
   title: string
   prompt: string
   status: 'pending' | 'running' | 'completed' | 'error'
+  /** OpenAI response ID used to resume polling if the page reloads */
+  responseId?: string
   createdAt: string
   completedAt?: string
   result?: ResearchResult
