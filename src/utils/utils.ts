@@ -40,3 +40,17 @@ export function calculateCost(inputTokens: number, outputTokens: number, model: 
     (outputTokens / 1000000) * modelPricing.output
   )
 }
+
+/**
+ * Safely parse a `Response` body as JSON. If the body cannot be parsed,
+ * an error is thrown that includes the first part of the response text
+ * to aid debugging.
+ */
+export async function safeParseJSON<T = any>(res: Response): Promise<T> {
+  const text = await res.text()
+  try {
+    return JSON.parse(text) as T
+  } catch {
+    throw new Error(`Invalid JSON response: ${text.slice(0, 200)}`)
+  }
+}

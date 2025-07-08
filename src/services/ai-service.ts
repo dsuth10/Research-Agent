@@ -1,4 +1,5 @@
 import type { PromptConfig, DeepResearchPromptConfig } from '@/types/types'
+import { safeParseJSON } from '@/utils/utils'
 
 function mapStatus(apiStatus: string | undefined): 'running' | 'completed' | 'failed' {
   switch (apiStatus) {
@@ -60,7 +61,7 @@ class AIService {
         }),
       });
       if (!res.ok) throw new Error('Failed to generate prompt');
-      const data = await res.json();
+      const data = await safeParseJSON(res);
       return data.choices?.[0]?.message?.content || config.goal;
     }
     throw new Error('OpenAI client not initialized');
@@ -82,7 +83,7 @@ class AIService {
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error('Failed to start research');
-      const data = await res.json();
+      const data = await safeParseJSON(res);
       const responseId = data.id;
       const self = this;
       const stream = new ReadableStream<string>({
@@ -97,7 +98,7 @@ class AIService {
                 },
               });
               if (!statusRes.ok) throw new Error('Failed to poll research status');
-              const status = await statusRes.json();
+              const status = await safeParseJSON(statusRes);
               const mappedStatus = mapStatus(status.status);
               if (mappedStatus === 'completed') {
                 controller.enqueue(JSON.stringify({ status: 'completed', id: responseId }));
@@ -137,7 +138,7 @@ class AIService {
                 },
               });
               if (!statusRes.ok) throw new Error('Failed to poll research status');
-              const status = await statusRes.json();
+              const status = await safeParseJSON(statusRes);
               const mappedStatus = mapStatus(status.status);
               if (mappedStatus === 'completed') {
                 controller.enqueue(JSON.stringify({ status: 'completed', id: responseId }));
@@ -171,7 +172,7 @@ class AIService {
         },
       });
       if (!res.ok) throw new Error('Failed to fetch research result');
-      const result = await res.json();
+      const result = await safeParseJSON(res);
       const mappedStatus = mapStatus(result.status);
       if (mappedStatus === 'completed') {
         return result.result;
