@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAppStore } from '@/store/app-store';
 import { openaiService } from '@/services/openai-service';
 import Button from '@/components/Button';
 import Card from '@/components/Card';
+import type { DeepResearchPromptConfig } from '@/types/types';
 
 // TODO: Implement task execution, streaming updates, and cost tracking
 const AgentRunner = () => {
@@ -33,7 +34,8 @@ const AgentRunner = () => {
       setError(null);
       try {
         updateResearch(currentResearch.id, { status: 'running' });
-        const { stream, responseId } = await openaiService.runDeepResearch(currentResearch.prompt);
+        const config = JSON.parse(currentResearch.prompt) as DeepResearchPromptConfig;
+        const { stream, responseId } = await openaiService.runDeepResearch(config);
         const reader = stream.getReader();
         streamRef.current = reader;
         let done = false;
