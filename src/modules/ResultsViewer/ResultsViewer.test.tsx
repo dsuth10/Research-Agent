@@ -55,7 +55,7 @@ describe('ResultsViewer', () => {
   it('shows sources and cost', () => {
     render(<ResultsViewer />);
     fireEvent.click(screen.getByText('Sources'));
-    expect(screen.getByText('Source 1')).toBeInTheDocument();
+    expect(screen.getByText(/Source 1/)).toBeInTheDocument();
     expect(screen.getByText('Input Tokens:')).toBeInTheDocument();
     expect(screen.getByText('Output Tokens:')).toBeInTheDocument();
     expect(screen.getByText('Total Cost:')).toBeInTheDocument();

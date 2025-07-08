@@ -81,5 +81,24 @@ A modern, scalable React SPA for advanced research workflows, powered exclusivel
 ## Repository
 [GitHub: dsuth10/Research-Agent](https://github.com/dsuth10/Research-Agent)
 
+## Testing
+- All tests use Vitest as the test runner, with React Testing Library for component/integration tests and Playwright for browser/E2E tests.
+- Test files are located alongside their modules/components (e.g., `src/modules/ModuleName/ModuleName.test.tsx`, `src/components/ComponentName.test.tsx`).
+- Utility function tests are in the same directory as the utility (e.g., `src/utils/utils.test.ts`).
+- To run all tests:
+  ```bash
+  npm test
+  ```
+- To run the test UI:
+  ```bash
+  npm run test:ui
+  ```
+- To run browser/E2E tests:
+  ```bash
+  npm run test:browser
+  ```
+- Add new tests by creating `.test.tsx` files next to the component/module you want to test.
+- Test setup and mocks are handled in `src/setup.ts`.
+
 ---
 For full technical details, see `Complete Technical Guide.md`. 

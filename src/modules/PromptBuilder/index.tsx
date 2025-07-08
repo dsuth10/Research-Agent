@@ -187,8 +187,9 @@ function PromptBuilder() {
         return (
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium mb-2">User Prompt *</label>
+              <label htmlFor="userPrompt" className="block text-sm font-medium mb-2">User Prompt *</label>
               <Textarea
+                id="userPrompt"
                 value={config.userPrompt}
                 onChange={e => updateConfig({ userPrompt: e.target.value })}
                 rows={3}
@@ -201,8 +202,9 @@ function PromptBuilder() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">(Optional) System Instructions</label>
+              <label htmlFor="systemPrompt" className="block text-sm font-medium mb-2">(Optional) System Instructions</label>
               <Textarea
+                id="systemPrompt"
                 value={config.systemPrompt}
                 onChange={e => updateConfig({ systemPrompt: e.target.value })}
                 rows={2}
@@ -219,8 +221,9 @@ function PromptBuilder() {
         return (
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium mb-2">Model *</label>
+              <label htmlFor="model" className="block text-sm font-medium mb-2">Model *</label>
               <Select
+                id="model"
                 value={config.model}
                 onChange={e => updateConfig({ model: e.target.value as any })}
               >
@@ -231,8 +234,9 @@ function PromptBuilder() {
               {errors.model && <div className="text-xs text-destructive">{errors.model}</div>}
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Max Output Tokens *</label>
+              <label htmlFor="maxTokens" className="block text-sm font-medium mb-2">Max Output Tokens *</label>
               <Input
+                id="maxTokens"
                 type="number"
                 min={100}
                 max={typeof config.model === 'string' && config.model.includes('o4-mini') ? 64000 : 128000}
@@ -317,7 +321,15 @@ function PromptBuilder() {
               <span className="text-xs text-muted-foreground">Step {step + 1} of {SIDEBAR_STEPS.length}</span>
               <div className="flex-1" />
               {step > 0 && <Button size="sm" variant="ghost" onClick={() => setStep(step - 1)}>Back</Button>}
-              {step < SIDEBAR_STEPS.length - 1 && <Button size="sm" onClick={() => { if (pureValidateStep(step)) setStep(step + 1); }}>Next</Button>}
+              {step < SIDEBAR_STEPS.length - 1 && (
+                <Button size="sm" onClick={() => {
+                  if (pureValidateStep(step)) {
+                    setStep(step + 1);
+                  } else {
+                    setStepErrors(step);
+                  }
+                }}>Next</Button>
+              )}
             </div>
           </div>
           {renderStep()}

@@ -1,13 +1,20 @@
 import '@testing-library/jest-dom'
 import { vi, beforeEach } from 'vitest'
 
+// Helper to get the global object in any environment
+const globalObj: any = typeof window !== 'undefined'
+  ? window
+  : typeof global !== 'undefined'
+    ? global
+    : globalThis;
+
 // Mock File System Access API for tests
-;(global as any).showDirectoryPicker = vi.fn()
-;(global as any).showSaveFilePicker = vi.fn()
-;(global as any).showOpenFilePicker = vi.fn()
+globalObj.showDirectoryPicker = vi.fn();
+globalObj.showSaveFilePicker = vi.fn();
+globalObj.showOpenFilePicker = vi.fn();
 
 // Mock fetch for API calls
-;(global as any).fetch = vi.fn()
+globalObj.fetch = vi.fn();
 
 // Setup for React Query
 import { QueryClient } from '@tanstack/react-query'
