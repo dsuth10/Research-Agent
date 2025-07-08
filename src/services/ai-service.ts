@@ -67,6 +67,25 @@ class AIService {
     throw new Error('OpenAI client not initialized');
   }
 
+  async runChatCompletion(payload: { model: string; messages: any[]; max_tokens?: number }): Promise<string> {
+    if (this.isOpenRouter && this.openRouterConfig) {
+      const res = await fetch(`${this.openRouterConfig.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.openRouterConfig.apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': window.location.origin,
+          'X-Title': 'Research Agent',
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error('Failed to run completion');
+      const data = await safeParseJSON(res);
+      return data.choices?.[0]?.message?.content || '';
+    }
+    throw new Error('OpenAI client not initialized');
+  }
+
   async runDeepResearch(payload: { model: string; input: any[]; max_tokens?: number }): Promise<{
     responseId: string;
     stream: ReadableStream<string>;

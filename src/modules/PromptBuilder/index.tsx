@@ -111,7 +111,6 @@ function PromptBuilder() {
   // In handleRun and previewPayload, construct payload based on model type
   const buildPayload = (cfg: OpenRouterPromptConfig) => {
     if (isDeepResearchModel(cfg.model)) {
-      // For o3/o4 models, include tools/background if needed (not used here, but left for future)
       return {
         model: cfg.model,
         input: [
@@ -119,14 +118,11 @@ function PromptBuilder() {
           { role: 'user', content: cfg.userPrompt }
         ],
         max_tokens: cfg.maxTokens,
-        // tools: cfg.tools, // Uncomment if you ever add o3/o4 support again
-        // background: cfg.background, // Uncomment if you ever add o3/o4 support again
       };
     } else {
-      // For non-o3/o4 models, only include model, input, max_tokens
       return {
         model: cfg.model,
-        input: [
+        messages: [
           { role: 'system', content: cfg.systemPrompt || '' },
           { role: 'user', content: cfg.userPrompt }
         ],
