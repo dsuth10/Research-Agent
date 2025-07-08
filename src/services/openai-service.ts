@@ -147,6 +147,43 @@ Return only the optimized research prompt, nothing else.`
     return { responseId, stream };
   }
 
+  /** Create a progress stream for an existing response ID */
+  createProgressStream(responseId: string): ReadableStream<string> {
+    if (!this.client) {
+      throw new Error('OpenAI client not initialized');
+    }
+    const self = this;
+    return new ReadableStream<string>({
+      async start(controller) {
+        const pollForUpdates = async () => {
+          try {
+            const status = await self.client!.responses.retrieve(responseId);
+            const mappedStatus = mapStatus(status.status);
+            const mapped = {
+              ...status,
+              status: mappedStatus,
+              usage: mapUsage(status.usage),
+            };
+            if (mapped.status === 'completed') {
+              controller.enqueue(JSON.stringify(mapped));
+              controller.close();
+              return;
+            }
+            if (mapped.status === 'failed') {
+              controller.error(new Error('Research failed'));
+              return;
+            }
+            controller.enqueue(JSON.stringify({ status: 'running', id: responseId }));
+            setTimeout(pollForUpdates, 2000);
+          } catch (error) {
+            controller.error(error);
+          }
+        };
+        pollForUpdates();
+      },
+    });
+  }
+
   async getResearchResult(responseId: string): Promise<OpenAIResponse> {
     if (!this.client) {
       throw new Error('OpenAI client not initialized')

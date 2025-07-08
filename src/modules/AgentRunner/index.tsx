@@ -28,14 +28,26 @@ const AgentRunner = () => {
   useEffect(() => {
     let cancelled = false;
     const runResearch = async () => {
-      if (!currentResearch || currentResearch.status !== 'pending') return;
+      if (!currentResearch) return;
       setProgress('running');
-      setStatusText('Starting research...');
       setError(null);
       try {
-        updateResearch(currentResearch.id, { status: 'running' });
-        const config = JSON.parse(currentResearch.prompt) as DeepResearchPromptConfig;
-        const { stream, responseId } = await openaiService.runDeepResearch(config);
+        let responseId = currentResearch.responseId;
+        let stream: ReadableStream<string> | null = null;
+        if (currentResearch.status === 'pending') {
+          setStatusText('Starting research...');
+          updateResearch(currentResearch.id, { status: 'running' });
+          const config = JSON.parse(currentResearch.prompt) as DeepResearchPromptConfig;
+          const res = await openaiService.runDeepResearch(config);
+          responseId = res.responseId;
+          stream = res.stream;
+          updateResearch(currentResearch.id, { responseId, status: 'running' });
+        } else if (responseId) {
+          setStatusText('Resuming research...');
+          stream = openaiService.createProgressStream(responseId);
+        } else {
+          return;
+        }
         const reader = stream.getReader();
         streamRef.current = reader;
         let done = false;
@@ -79,7 +91,11 @@ const AgentRunner = () => {
         updateResearch(currentResearch.id, { status: 'error' });
       }
     };
-    if (currentResearch && currentResearch.status === 'pending') {
+    if (
+      currentResearch &&
+      (currentResearch.status === 'pending' ||
+        (currentResearch.status === 'running' && currentResearch.responseId && !currentResearch.result))
+    ) {
       runResearch();
     }
     return () => {
