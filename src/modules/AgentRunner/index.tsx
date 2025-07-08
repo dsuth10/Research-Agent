@@ -32,7 +32,7 @@ const AgentRunner = () => {
     } else {
       return {
         model: cfg.model,
-        input: [
+        messages: [
           { role: 'system', content: cfg.systemPrompt || '' },
           { role: 'user', content: cfg.userPrompt }
         ],
@@ -51,19 +51,38 @@ const AgentRunner = () => {
       try {
         let responseId = currentResearch.responseId;
         let stream: ReadableStream<string> | null = null;
-        if (currentResearch.status === 'pending') {
-          setStatusText('Starting research...');
-          updateResearch(currentResearch.id, { status: 'running' });
-          const rawConfig = JSON.parse(currentResearch.prompt);
-          const payload = buildPayload(rawConfig);
-          const res = await aiService.runDeepResearch(payload);
-          responseId = res.responseId;
-          stream = res.stream;
-          updateResearch(currentResearch.id, { responseId, status: 'running' });
-        } else if (responseId) {
-          setStatusText('Resuming research...');
-          stream = aiService.createProgressStream(responseId);
+        const rawConfig = JSON.parse(currentResearch.prompt);
+        const payload = buildPayload(rawConfig);
+        if (isDeepResearchModel(rawConfig.model)) {
+          if (currentResearch.status === 'pending') {
+            setStatusText('Starting research...');
+            updateResearch(currentResearch.id, { status: 'running' });
+            const res = await aiService.runDeepResearch(payload);
+            responseId = res.responseId;
+            stream = res.stream;
+            updateResearch(currentResearch.id, { responseId, status: 'running' });
+          } else if (responseId) {
+            setStatusText('Resuming research...');
+            stream = aiService.createProgressStream(responseId);
+          } else {
+            return;
+          }
         } else {
+          // Non deep-research models run synchronously
+          setStatusText('Running completion...');
+          updateResearch(currentResearch.id, { status: 'running' });
+          const result = await aiService.runChatCompletion(payload);
+          updateResearch(currentResearch.id, {
+            status: 'completed',
+            completedAt: new Date().toISOString(),
+            result: {
+              report: result,
+              thoughtProcess: '',
+              sources: [],
+            },
+          });
+          setProgress('completed');
+          setTimeout(() => setUI({ currentTab: 'results' }), 1000);
           return;
         }
         const reader = stream.getReader();
