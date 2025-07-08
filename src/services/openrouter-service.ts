@@ -3,6 +3,8 @@ export interface OpenRouterModel {
   name: string
 }
 
+import { safeParseJSON } from '@/utils/utils'
+
 export async function fetchOpenRouterModels(apiKey: string): Promise<OpenRouterModel[]> {
   const res = await fetch('https://openrouter.ai/api/v1/models', {
     headers: {
@@ -14,6 +16,6 @@ export async function fetchOpenRouterModels(apiKey: string): Promise<OpenRouterM
   if (!res.ok) {
     throw new Error(`Failed to fetch models: ${res.status}`)
   }
-  const data = await res.json()
-  return data.data as OpenRouterModel[]
+  const data = await safeParseJSON<{ data: OpenRouterModel[] }>(res)
+  return data.data
 }
