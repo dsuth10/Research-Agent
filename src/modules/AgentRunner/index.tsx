@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAppStore } from '@/store/app-store';
-import { openaiService } from '@/services/openai-service';
+import { aiService } from '@/services/ai-service';
 import Button from '@/components/Button';
 import Card from '@/components/Card';
 import type { DeepResearchPromptConfig } from '@/types/types';
@@ -38,13 +38,13 @@ const AgentRunner = () => {
           setStatusText('Starting research...');
           updateResearch(currentResearch.id, { status: 'running' });
           const config = JSON.parse(currentResearch.prompt) as DeepResearchPromptConfig;
-          const res = await openaiService.runDeepResearch(config);
+          const res = await aiService.runDeepResearch(config);
           responseId = res.responseId;
           stream = res.stream;
           updateResearch(currentResearch.id, { responseId, status: 'running' });
         } else if (responseId) {
           setStatusText('Resuming research...');
-          stream = openaiService.createProgressStream(responseId);
+          stream = aiService.createProgressStream(responseId);
         } else {
           return;
         }
@@ -61,7 +61,7 @@ const AgentRunner = () => {
             } else if (data.status === 'completed') {
               setStatusText('Research complete!');
               // Fetch final result
-              const result = await openaiService.getResearchResult(responseId);
+              const result = await aiService.getResearchResult(responseId);
               const costObj = calculateCost(result.usage.input_tokens, result.usage.output_tokens);
               setCost(costObj);
               updateResearch(currentResearch.id, {

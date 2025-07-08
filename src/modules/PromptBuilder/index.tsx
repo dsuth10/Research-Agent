@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import Card from '@/components/Card';
 import Button from '@/components/Button';
 import Input from '@/components/Input';
@@ -7,6 +8,7 @@ import Select from '@/components/Select';
 import { useAppStore } from '@/store/app-store';
 import { calculateCost, generateId } from '@/utils/utils';
 import type { DeepResearchPromptConfig, DeepResearchTool } from '@/types/types';
+import { fetchOpenRouterModels } from '@/services/openrouter-service';
 
 const SIDEBAR_STEPS = [
   { id: 0, label: 'Query & Prompt' },
@@ -16,10 +18,9 @@ const SIDEBAR_STEPS = [
   { id: 4, label: 'Preview JSON' },
 ];
 
-const DEFAULT_CONFIG: DeepResearchPromptConfig = {
+const BASE_CONFIG: Omit<DeepResearchPromptConfig, 'model'> = {
   userPrompt: '',
   systemPrompt: '',
-  model: 'o3-deep-research-2025-06-26',
   maxTokens: 2000,
   tools: [{ type: 'web_search_preview', search_context_size: 'medium' }],
   reasoning: { summary: 'auto', effort: 'medium' },
@@ -27,9 +28,12 @@ const DEFAULT_CONFIG: DeepResearchPromptConfig = {
 };
 
 function PromptBuilder() {
-  const { addResearch, setCurrentResearch, setUI } = useAppStore();
+  const { addResearch, setCurrentResearch, setUI, settings } = useAppStore();
   const [step, setStep] = useState(0);
-  const [config, setConfig] = useState<DeepResearchPromptConfig>(DEFAULT_CONFIG);
+  const [config, setConfig] = useState<DeepResearchPromptConfig>({
+    ...BASE_CONFIG,
+    model: settings.researchModel,
+  });
   const [toolChoiceOverride, setToolChoiceOverride] = useState<'auto' | 'web_search_preview' | 'mcp'>('auto');
   const [webhookEnabled, setWebhookEnabled] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
@@ -38,6 +42,12 @@ function PromptBuilder() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [jsonCopied, setJsonCopied] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const { data: routerModels } = useQuery({
+    queryKey: ['openrouter-models', settings.openrouterApiKey],
+    queryFn: () => fetchOpenRouterModels(settings.openrouterApiKey),
+    enabled: settings.apiProvider === 'openrouter' && !!settings.openrouterApiKey,
+  });
 
   // Step navigation
   const goToStep = (idx: number) => setStep(idx);
@@ -201,10 +211,17 @@ function PromptBuilder() {
                 value={config.model}
                 onChange={e => updateConfig({ model: e.target.value as any })}
               >
-                <option value="o3-deep-research-2025-06-26">o3-deep-research</option>
-                <option value="o4-mini-deep-research-2025-06-26">o4-mini-deep-research</option>
+                {settings.apiProvider === 'openrouter' && routerModels
+                  ? routerModels.map(m => (
+                      <option key={m.id} value={m.id}>{m.name}</option>
+                    ))
+                  : (
+                    <>
+                      <option value="o3-deep-research-2025-06-26">o3-deep-research</option>
+                      <option value="o4-mini-deep-research-2025-06-26">o4-mini-deep-research</option>
+                    </>
+                  )}
               </Select>
-              <div className="text-xs text-muted-foreground mt-1">o4-mini ≈4× cheaper but shorter context</div>
               {errors.model && <div className="text-xs text-destructive">{errors.model}</div>}
             </div>
             <div>
@@ -212,7 +229,7 @@ function PromptBuilder() {
               <Input
                 type="number"
                 min={100}
-                max={config.model === 'o4-mini-deep-research-2025-06-26' ? 64000 : 128000}
+                max={config.model.includes('o4-mini') ? 64000 : 128000}
                 value={config.maxTokens}
                 onChange={e => updateConfig({ maxTokens: Number(e.target.value) })}
               />
@@ -223,12 +240,12 @@ function PromptBuilder() {
               <div className="w-full bg-accent h-2 rounded">
                 <div
                   className="bg-primary h-2 rounded"
-                  style={{ width: `${Math.min(100, (config.maxTokens / (config.model === 'o4-mini-deep-research-2025-06-26' ? 64000 : 128000)) * 100)}%` }}
+                  style={{ width: `${Math.min(100, (config.maxTokens / (config.model.includes('o4-mini') ? 64000 : 128000)) * 100)}%` }}
                 />
               </div>
               <div className="flex justify-between text-xs text-muted-foreground mt-1">
                 <span>Context used: {config.maxTokens}</span>
-                <span>Limit: {config.model === 'o4-mini-deep-research-2025-06-26' ? '64,000' : '128,000'}</span>
+                <span>Limit: {config.model.includes('o4-mini') ? '64,000' : '128,000'}</span>
               </div>
             </div>
           </div>
